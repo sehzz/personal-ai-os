@@ -1,0 +1,5 @@
+resources/*
+conf/*
+__pycache__/*
+*.pyc
+.venv/
