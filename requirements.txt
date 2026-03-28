@@ -4,3 +4,5 @@ httpx
 pydantic-settings
 requests
 faster-whisper
+sounddevice
+webrtcvad-wheels
