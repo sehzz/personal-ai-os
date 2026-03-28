@@ -8,6 +8,9 @@ from shared.memory_service import MemoryService
 from shared.models import ChatRequest
 from shared.ollama_service import OllamaService
 from shared.utils import build_prompt
+from voice.stt import STTService
+from voice.tts import TTSService
+from voice.voice_loop import VoiceLoop
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -15,6 +18,12 @@ async def lifespan(app: FastAPI):
     app.state.ollama = OllamaService()
     app.state.embedding = EmbeddingService()
     app.state.memory = MemoryService()
+    app.state.voice_loop = VoiceLoop(
+    ollama_service=app.state.ollama,
+    memory_service=app.state.memory,
+    stt_service=STTService(),
+    tts_service=TTSService()
+)
     yield
 
 app = FastAPI(
@@ -44,3 +53,9 @@ def chat(request: ChatRequest, req: Request):
     response = ollama.generate_stream(prompt)
     wrapped = stream_and_store(response, req.app.state.memory, request.message)
     return StreamingResponse(wrapped, media_type="text/plain")
+
+@app.post("/voice")
+def voice(req: Request):
+    req.app.state.voice_loop.run_once()
+
+    return {"status": "ok"}

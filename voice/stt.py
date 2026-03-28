@@ -53,7 +53,7 @@ def record_until_silent(sample_rate: int = 16000, frame_duration: int = 30, sile
 
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 #     stt_service = STTService()
 #     result = stt_service.transcribe("test.wav")
 #     print(result)
