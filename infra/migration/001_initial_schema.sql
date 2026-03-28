@@ -424,3 +424,25 @@ ON CONFLICT (manager) DO NOTHING;
 --   Finance (4), Content (4), Relationships (4),
 --   Scheduled Tasks (1) + vector tables (4)
 -- ============================================================
+
+CREATE OR REPLACE FUNCTION match_memories(
+    query_embedding vector(768),
+    match_manager text,
+    match_count int
+)
+RETURNS TABLE (
+    id uuid,
+    content text,
+    similarity float
+)
+LANGUAGE sql STABLE
+AS $$
+    SELECT
+        id,
+        content,
+        1 - (embedding <=> query_embedding) AS similarity
+    FROM la_memory_vectors
+    WHERE manager = match_manager
+    ORDER BY embedding <=> query_embedding
+    LIMIT match_count;
+$$;

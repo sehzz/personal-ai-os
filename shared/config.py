@@ -9,7 +9,7 @@ class Settings(BaseModel):
     ollama_model: str
 
     # Supabase
-    db_url: str
+    base_url: str
     db_api_key: str
 
 
