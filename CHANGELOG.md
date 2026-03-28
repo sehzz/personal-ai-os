@@ -4,6 +4,16 @@ All notable changes to this project will be documented here.
 
 ---
 
+## [Phase 3]
+### Added
+- `STTService` — transcribes audio to text via faster-whisper (base model, CPU)
+- `record_until_silent()` — records mic input until 1.5 seconds of silence detected, saves to temp `.wav` file
+- `TTSService` — converts text to speech via piper-tts and plays it locally
+- `VoiceLoop` — orchestrates the full voice turn: record → transcribe → retrieve memory → LLM → speak → store
+- `POST /voice` — endpoint that triggers one full voice turn
+
+---
+
 ## [Phase 2]
 ### Added
 - `EmbeddingService` — converts text to 768-dim vectors via nomic-embed-text (Ollama)
