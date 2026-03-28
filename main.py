@@ -7,7 +7,7 @@ from shared.embedding_service import EmbeddingService
 from shared.memory_service import MemoryService
 from shared.models import ChatRequest
 from shared.ollama_service import OllamaService
-
+from shared.utils import build_prompt
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -21,17 +21,6 @@ app = FastAPI(
     title="Personal AI OS",
     lifespan=lifespan
 )
-
-def build_prompt(message: str, memories: list[str]):
-    if not memories:
-        return message
-    
-    prompt = "You are a helpful assistant. Use the following memories to answer the question.\n\n"
-    for i, memory in enumerate(memories):
-        prompt += f"Memory {i+1}: {memory}\n"
-    prompt += f"User message: {message}\n"
-
-    return prompt
 
 def stream_and_store(generator, memory: MemoryService, user_message: str):
     full_response = ""
