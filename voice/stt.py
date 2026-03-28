@@ -15,3 +15,5 @@ class STTService:
 #     stt_service = STTService()
 #     result = stt_service.transcribe("test.wav")
 #     print(result)
+
+# conf -> piper
