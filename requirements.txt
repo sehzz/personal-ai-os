@@ -3,4 +3,4 @@ uvicorn[standard]
 httpx
 pydantic-settings
 requests
-logging
+faster-whisper
