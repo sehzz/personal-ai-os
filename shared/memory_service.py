@@ -5,10 +5,11 @@ class MemoryService:
 
     def __init__(self):
         self.db = Database(app_name="ollama")
+        self.embedding_service = EmbeddingService()
+
 
     def store(self, text: str, manager: str = "admin") -> None:
-        embedding_service = EmbeddingService()
-        embedding = embedding_service.embed(text)
+        embedding = self.embedding_service.embed(text)
         
         data = {
             "content": text,
@@ -20,8 +21,7 @@ class MemoryService:
         return
     
     def retrieve(self, text: str, manager: str = "admin", match_count: int = 5) -> list[str]:
-        embedding_service = EmbeddingService()
-        embedding = embedding_service.embed(text)
+        embedding = self.embedding_service.embed(text)
 
         data = {
             "query_embedding": embedding,
