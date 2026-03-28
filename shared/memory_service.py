@@ -21,6 +21,9 @@ class MemoryService:
         return
     
     def retrieve(self, text: str, manager: str = "admin", match_count: int = 5) -> list[str]:
+        if not text or not text.strip():
+            return []
+        
         embedding = self.embedding_service.embed(text)
 
         data = {

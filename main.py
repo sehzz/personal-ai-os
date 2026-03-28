@@ -7,7 +7,10 @@ from shared.embedding_service import EmbeddingService
 from shared.memory_service import MemoryService
 from shared.models import ChatRequest
 from shared.ollama_service import OllamaService
-
+from shared.utils import build_prompt
+from voice.stt import STTService
+from voice.tts import TTSService
+from voice.voice_loop import VoiceLoop
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -15,23 +18,18 @@ async def lifespan(app: FastAPI):
     app.state.ollama = OllamaService()
     app.state.embedding = EmbeddingService()
     app.state.memory = MemoryService()
+    app.state.voice_loop = VoiceLoop(
+    ollama_service=app.state.ollama,
+    memory_service=app.state.memory,
+    stt_service=STTService(),
+    tts_service=TTSService()
+)
     yield
 
 app = FastAPI(
     title="Personal AI OS",
     lifespan=lifespan
 )
-
-def build_prompt(message: str, memories: list[str]):
-    if not memories:
-        return message
-    
-    prompt = "You are a helpful assistant. Use the following memories to answer the question.\n\n"
-    for i, memory in enumerate(memories):
-        prompt += f"Memory {i+1}: {memory}\n"
-    prompt += f"User message: {message}\n"
-
-    return prompt
 
 def stream_and_store(generator, memory: MemoryService, user_message: str):
     full_response = ""
@@ -55,3 +53,9 @@ def chat(request: ChatRequest, req: Request):
     response = ollama.generate_stream(prompt)
     wrapped = stream_and_store(response, req.app.state.memory, request.message)
     return StreamingResponse(wrapped, media_type="text/plain")
+
+@app.post("/voice")
+def voice(req: Request):
+    req.app.state.voice_loop.run_once()
+
+    return {"status": "ok"}
