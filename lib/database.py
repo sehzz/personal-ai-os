@@ -1,3 +1,6 @@
+import json
+from typing import List
+
 from lib.cache import JSONFileCache
 from lib.connectors import URLCaller
 from lib.environment import get_conf_for
@@ -173,6 +176,29 @@ class Database():
             return None
         
         log.info(f"Data deleted from {table_name} where {condition}: Success")
+
+    def match_memories(self, query_embedding: List[float], match_count: int = 5, match_manager: str = "admin") -> list[dict]:
+        headers = self.get_headers()
+        base_url = self.conf.get("base_url")
+        if not base_url:
+            raise ValueError("Base URL not found in config")
+        
+        url = f"{base_url}/rest/v1/rpc/match_memories"
+        data = {
+                "query_embedding": query_embedding,
+                "match_manager": match_manager,
+                "match_count": match_count
+            }
+
+        try:
+            results = self.url_caller.perform_single_call(url=url, headers=headers, verb="post", json=data)
+
+        except Exception as e:
+            log.error(f"Data addition request failed: {e}")
+            return None
+        
+        return [item["content"] for item in results.json]
+
 
 
 
