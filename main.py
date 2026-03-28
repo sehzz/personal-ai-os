@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse
 
+from shared.embedding_service import EmbeddingService
 from shared.models import ChatRequest
 from shared.ollama_service import OllamaService
 
@@ -11,6 +12,7 @@ from shared.ollama_service import OllamaService
 async def lifespan(app: FastAPI):
     
     app.state.ollama = OllamaService()
+    app.state.embedding = EmbeddingService()
     yield
 
 app = FastAPI(
