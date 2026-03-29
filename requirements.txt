@@ -6,3 +6,6 @@ requests
 faster-whisper
 sounddevice
 webrtcvad-wheels
+openwakeword
+pyaudio
+onnxruntime
