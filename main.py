@@ -3,14 +3,19 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse
 
+from lib.log import logger
 from shared.embedding_service import EmbeddingService
 from shared.memory_service import MemoryService
 from shared.models import ChatRequest
 from shared.ollama_service import OllamaService
 from shared.utils import build_prompt
+from voice.state_machine import State, StateMachine
 from voice.stt import STTService
 from voice.tts import TTSService
 from voice.voice_loop import VoiceLoop
+from voice.wake_word import WakeWordService
+
+log = logger.get_logger()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -18,12 +23,23 @@ async def lifespan(app: FastAPI):
     app.state.ollama = OllamaService()
     app.state.embedding = EmbeddingService()
     app.state.memory = MemoryService()
+    app.state.machine = StateMachine()
     app.state.voice_loop = VoiceLoop(
     ollama_service=app.state.ollama,
     memory_service=app.state.memory,
     stt_service=STTService(),
-    tts_service=TTSService()
+    tts_service=TTSService(),
+    machine_state=app.state.machine
+    
 )
+    def on_wake_word():
+        if app.state.machine.current_state != State.SLEEPING:
+            log.info(f"Wake word ignored — currently {app.state.machine.current_state.name}")
+            return
+        app.state.voice_loop.run_once()
+
+    app.state.wake_word = WakeWordService(on_detected=on_wake_word, machine_state=app.state.machine)
+    app.state.wake_word.start()
     yield
 
 app = FastAPI(
@@ -36,7 +52,6 @@ def stream_and_store(generator, memory: MemoryService, user_message: str):
     for chunk in generator:
         full_response += chunk
         yield chunk
-    # streaming is done — now store the exchange
     memory.store(f"User: {user_message}\nAssistant: {full_response}")
 
 @app.get("/health")

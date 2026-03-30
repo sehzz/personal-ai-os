@@ -1,7 +1,8 @@
-
-
 from enum import Enum
+import time
+from lib.log import logger
 
+log = logger.get_logger()
 
 class State(Enum):
     SLEEPING  = 0
@@ -14,12 +15,15 @@ class State(Enum):
 class StateMachine:
     def __init__(self):
         self.state = State.SLEEPING
+        self.last_sleeping_at = 0
 
     def transition(self, new_state):
         if isinstance(new_state, State):
             old_state = self.state
             self.state = new_state
-            print(f"Transitioned from {old_state.name} to state: {self.state.name}")
+            if new_state == State.SLEEPING:
+                self.last_sleeping_at = time.time()
+            log.info(f"Transitioned from {old_state.name} to state: {self.state.name}")
         else:
             raise ValueError("Invalid state transition")
     
