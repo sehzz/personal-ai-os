@@ -12,6 +12,7 @@ I established the core environment and data layer for the OS. This phase focused
 ### Multi-agent architecture decision
 The first major architectural decision was whether to use a single monolithic LLM for everything or a team of specialized agents. I opted for a multi-agent approach to optimize memory efficiency and performance. By assigning specific domains to individual agents, I reduce the total model context required for any single task, as each "manager" only handles relevant data.
 
+```
 Core architectural principles:
 ├── Multi-agent architecture (Society of Mind pattern)
 ├── Domain-isolated memory per manager
@@ -20,6 +21,7 @@ Core architectural principles:
 ├── Three-tier alert system (low/medium/high)
 ├── Admin orchestration with full audit trail
 └── Proactive + reactive modes
+```
 
 ### Database design
 The schema was designed around the principle of strict domain isolation:
