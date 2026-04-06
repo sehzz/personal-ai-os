@@ -10,8 +10,15 @@ class IntentClassifier:
         self.ollama = ollama
 
     def classify(self, message: str) -> dict:
-        prompt = f"""
-        You are an intent classifier. Classify the user message below.
+        prompt = f"""You are an intent classifier for a Personal AI OS. Classify the user message below.
+
+        The available domains are:
+        - life_admin: tasks, calendar, bills, subscriptions, deadlines, schedule, reminders
+        - finance: money, spending, budget, transactions, investments, expenses, income
+        - content: social media, posts, reels, analytics, content ideas, Instagram, TikTok
+        - relationships: people, birthdays, anniversaries, friends, family, contacts
+        - multi: the message spans more than one domain above
+        - unknown: cannot be classified into any domain above
 
         Return ONLY a JSON object with these exact fields:
         - domain: one of [life_admin, finance, content, relationships, multi, unknown]
@@ -21,7 +28,7 @@ class IntentClassifier:
         No explanation. No markdown. JSON only.
 
         Message: {message}
-        """
+"""
         response = self.ollama.generate(prompt)
         response = response.strip().strip("```json").strip("```").strip()
         
