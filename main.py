@@ -14,8 +14,15 @@ from voice.stt import STTService
 from voice.tts import TTSService
 from voice.voice_loop import VoiceLoop
 from voice.wake_word import WakeWordService
+from managers.life_admin.manager import LifeAdminManager
+from managers.finance.manager import FinanceManager
+from managers.content.manager import ContentManager
+from managers.relationship.manager import RelationshipManager
+from admin.orchestrator import AdminOrchestrator
+
 
 log = logger.get_logger()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -25,13 +32,26 @@ async def lifespan(app: FastAPI):
     app.state.memory = MemoryService()
     app.state.machine = StateMachine()
     app.state.voice_loop = VoiceLoop(
-    ollama_service=app.state.ollama,
-    memory_service=app.state.memory,
-    stt_service=STTService(),
-    tts_service=TTSService(),
-    machine_state=app.state.machine
+        ollama_service=app.state.ollama,
+        memory_service=app.state.memory,
+        stt_service=STTService(),
+        tts_service=TTSService(),
+        machine_state=app.state.machine
+        )
     
-)
+    managers = {
+    "life_admin": LifeAdminManager(),
+    "finance": FinanceManager(),
+    "content": ContentManager(),
+    "relationships": RelationshipManager(),
+    }
+
+    app.state.admin = AdminOrchestrator(
+        managers=managers,
+        ollama=app.state.ollama,
+        memory=app.state.memory
+        )
+    
     def on_wake_word():
         if app.state.machine.current_state != State.SLEEPING:
             log.info(f"Wake word ignored — currently {app.state.machine.current_state.name}")
@@ -60,14 +80,10 @@ def health():
 
 @app.post("/chat")
 def chat(request: ChatRequest, req: Request):
-    ollama = req.app.state.ollama
-    memory = req.app.state.memory.retrieve(request.message)
-    prompt = build_prompt(request.message, memory)
 
-
-    response = ollama.generate_stream(prompt)
-    wrapped = stream_and_store(response, req.app.state.memory, request.message)
-    return StreamingResponse(wrapped, media_type="text/plain")
+    response = req.app.state.admin.process(request.message)
+    
+    return response
 
 @app.post("/voice")
 def voice(req: Request):

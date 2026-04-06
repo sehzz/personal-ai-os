@@ -17,6 +17,7 @@ class AdminOrchestrator:
     def process(self, message: str) -> str:
         classifier = self.classifier.classify(message)
         domain = classifier.get("domain", "unknown")
+
         if domain in ("multi", "unknown"):
             return self.ollama.generate(message)
         
@@ -25,12 +26,9 @@ class AdminOrchestrator:
             log.warning(f"No manager found for domain: {domain}")
             return "Sorry, I couldn't process your request."
         
-        log.debug(f"Processing message with manager: {manager}")
         request = ManagerRequest(task=message, context={})
         response = manager.process(request)
     
-        log.debug(f"Manager response: {response}")
-
         return response.summary
             
 
