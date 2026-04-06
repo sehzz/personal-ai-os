@@ -19,6 +19,7 @@ from managers.finance.manager import FinanceManager
 from managers.content.manager import ContentManager
 from managers.relationship.manager import RelationshipManager
 from admin.orchestrator import AdminOrchestrator
+from admin.health_monitor import HealthMonitor
 
 
 log = logger.get_logger()
@@ -51,6 +52,8 @@ async def lifespan(app: FastAPI):
         ollama=app.state.ollama,
         memory=app.state.memory
         )
+    app.state.health_monitor = HealthMonitor(managers)
+    app.state.health_monitor.check_all()
     
     def on_wake_word():
         if app.state.machine.current_state != State.SLEEPING:
