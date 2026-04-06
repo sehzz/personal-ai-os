@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 
 from lib.cache import JSONFileCache
@@ -111,7 +112,7 @@ class Database():
         data = result.json
         
         #for testing purposes
-        cache = JSONFileCache(name=f"{self.app_name}_{table_name}_data")
+        cache = JSONFileCache(name=f"{self.app_name}_{table_name}_data.json")
         cache.save(data)
 
         return data
@@ -146,6 +147,36 @@ class Database():
             return None
         
         log.info(f"Data added to {table_name}")
+
+    def update_data_in_table(self, table_name: str, manager: str, data: dict):
+        """
+        Update data in a specified table in the database based on a condition.
+        
+        Args:
+            table_name (str): The name of the table to update data in.
+            manager (str): The manager for which to update data.
+            data (dict): The data to be updated in the table.
+                        Example: {
+                        "some_column": "newValue",                  
+                        }
+        Returns:
+            dict: The JSON response after updating the data.
+        """
+        headers = self.get_headers()
+        base_url = self.conf.get("base_url")
+        if not base_url:
+            raise ValueError("Base URL not found in config")
+        
+        url = f"{base_url}/rest/v1/{table_name}?manager=eq.{manager}"
+
+        try:
+            self.url_caller.perform_single_call(url=url, headers=headers, verb="patch", json=data)
+
+        except Exception as e:
+            log.error(f"Data update request failed: {e}")
+            return None
+        
+        log.info(f"Data updated in {table_name} for manager {manager}")
 
     def delete_data_from_table(self, table_name: str, id: int):
         """
@@ -204,6 +235,14 @@ class Database():
 
 
 if __name__ == "__main__":  #pragma: no cover
-    db = Database(app_name="grafana_db")
-    a = {"id": "in.(650,651)"}
-    db.delete_data_from_table(table_name="app_metrics", id=a)
+    # db = Database(app_name="grafana_db")
+    # a = {"id": "in.(650,651)"}
+    # db.delete_data_from_table(table_name="app_metrics", id=a)
+    db = Database(app_name="ollama")
+    payload = {
+                "manager": "finance",
+                "status": "offline",
+                "last_seen_at": datetime.now().isoformat(),
+                "last_error": None,
+            }
+    db.update_data_in_table(table_name="admin_manager_health", manager="finance", data=payload)

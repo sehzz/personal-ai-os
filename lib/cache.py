@@ -18,7 +18,7 @@ class JSONFileCache(BaseModel):
 
     @property
     def path(self) -> Path:
-        """Return the full path to the cache file based on whether it's a key or not."""
+        """Return the full path to the cache file."""
 
         base_dir =  self.file_path or RESOURSES_DIR
         return base_dir.joinpath(self.name)

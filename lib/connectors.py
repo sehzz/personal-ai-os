@@ -80,6 +80,8 @@ class URLCaller(BaseModel):
             fun = requests.put
         elif verb == "delete":
             fun = requests.delete
+        elif verb == "patch":
+            fun = requests.patch
         else:
             raise ValueError(f"Unsupported HTTP verb: {verb}")
         
