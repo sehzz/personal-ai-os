@@ -258,3 +258,70 @@ The callback checks `State.SLEEPING` before calling `run_once()`. This is a crit
 
 #### openWakeWord Choice
 I chose `openWakeWord` because it runs entirely on the CPU with no cloud dependency. It is open-source and provides a clear path for training custom, personalized wake words in future phases.
+
+
+## Phase 5: Multi-Agent Orchestration
+
+### What was built
+In this phase, I transformed the system from a simple chatbot into a "Society of Mind" architecture. The system now utilizes a central orchestrator to delegate tasks to specialized domain managers.
+
+- Core Infrastructure: Developed the `BaseManager` abstract class, `ManagerRequest`, `ManagerResponse` models, and the `AdminOrchestrator`.
+- Intelligence Layer: Created the `IntentClassifier` to parse user goals and the `HealthMonitor` to verify agent availability.
+- Agent Stubs: Built four specialized manager stubs (`LifeAdmin`, `Finance`, `Content`, and `Relationships`) to test routing logic.
+- Refactored API: Modified the `POST /chat` endpoint to route all traffic through the Admin rather than calling the LLM directly.
+
+### How it works
+`POST /chat` → `AdminOrchestrator.process()` → `IntentClassifier.classify()` → domain extracted → correct manager called → `ManagerResponse.summary` returned
+
+The system now operates through an "Admin-first" delegation flow:
+- Intake: `POST /chat` sends the user message to `AdminOrchestrator.process()`.
+- Classification: The message is passed to `IntentClassifier.classify()`, which extracts the domain, urgency, and type.
+- Delegation: If a specific domain is identified (e.g., `finance`), the Admin fetches the corresponding manager from a internal registry and calls its process() method.
+- Fallback: If the domain is `unknown` or `multi`, the system falls back to a direct Ollama call to ensure the user still receives a response.
+- Synthesis: The manager returns a `ManagerResponse` object; the Admin extracts the `summary` and returns it to the API.
+
+### Multi-domain example:
+User: "What should I focus on this week and how are my finances?"
+System: Classified as `multi` and falls back to Ollama and full conversational response returned.
+
+
+### The intent classifier
+The classifier acts as the "receptionist" of the OS. It uses a strict JSON-only prompt to ensure the output can be parsed programmatically.
+
+- Prompt Evolution: Early tests showed poor accuracy; for example, "What bills do I have due?" was incorrectly classified as `finance` instead of `life_admin`.
+- The Fix: I added explicit domain descriptions to the system prompt. Defining exactly what each manager handles increased routing accuracy from ~40% to ~95%.
+- Robustness: I implemented `.strip("json")` and backtick cleaning logic to handle cases where the LLM wraps its JSON output in Markdown, ensuring the system doesn't crash on formatting quirks.
+
+### Routing Logic
+The Admin maintains a `managers` dictionary that maps domain strings to manager instances. This makes the system highly extensible—adding a new specialized agent requires adding only a single line to the registry.
+
+- *Single Domain*: Manager is called directly and stub returns a mock summary.
+- *Unknown/Multi*: Bypasses specialized agents and goes directly to the base LLM.
+- *Error Handling*: If a domain is returned that has no registered manager, the system logs a warning and provides a graceful "I couldn't process this" fallback to the user.
+
+#### Example managers dict
+```python
+{
+      "life_admin": LifeAdminManager(),
+      "finance": FinanceManager(),
+      "content": ContentManager(),
+      "relationships": RelationshipManager(),
+}
+```
+When no manager is found then a warning is logged and we simply return a "Sorry, I couldn't process your request."
+
+### Key design decisions
+#### BaseManager abstract class
+I used Python’s `abc` module to define a strict interface for all agents. If a new manager is created without a `name` or a `process()` method, Python raises a `TypeError` at instantiation. This provides a "compile-time" safety net, ensuring no "broken" managers make it into the runtime environment.
+
+#### Stub-first approach
+I deliberately built stubs (empty managers) before building real tools. This allowed me to test the entire "plumbing" of the system—classification, state passing, and response synthesis—without the complexity of real database queries or API integrations getting in the way.
+
+#### Single Entry Point (Encapsulation)
+The `/chat` endpoint only knows about `admin.process()`. It has no knowledge of the 25-table schema or which manager is doing the work. This strict encapsulation means I can rewrite the entire backend agent logic without ever touching the API layer.
+
+#### Health Monitoring on Startup
+The `HealthMonitor.check_all()` method runs during the FastAPI lifespan startup. If a manager fails to initialize or is missing its required tables, the Admin knows immediately. This prevents "silent failures" where a user discovers a bug mid-conversation.
+
+#### Classifier Prompt Engineering
+This phase proved that prompt design is as critical as code architecture. By adding just 6 lines of domain definitions to the `IntentClassifier` prompt, the system's ability to correctly route complex requests (like bill management vs. bank balance) improved dramatically.
