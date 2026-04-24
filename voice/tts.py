@@ -1,5 +1,5 @@
-import subprocess
 import os
+import subprocess
 import tempfile
 import time
 
@@ -13,6 +13,12 @@ class TTSService:
     
     def speak(self, text: str) -> None:
 
+        output_path = self.generate(text)
+
+        time.sleep(0.1)
+        os.startfile(output_path)
+
+    def generate(self, text: str) -> str:
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
             output_path = f.name
         subprocess.run(
@@ -20,9 +26,8 @@ class TTSService:
             input=text.encode(),
             check=True
         )
-        time.sleep(0.1)
-        os.startfile(output_path)
 
+        return output_path
 
 
 if __name__ == "__main__":
