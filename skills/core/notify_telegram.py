@@ -9,6 +9,7 @@ class NotifyTelegramMsg(SkillBase):
         conf = get_conf_for("telegram")
         self.token = conf["bot_token"]
         self.chat_id = conf["chat_id"]
+        self.base_url = conf["base_url"]
         self.caller = URLCaller()
 
     @property
@@ -17,7 +18,7 @@ class NotifyTelegramMsg(SkillBase):
 
     def execute(self, **kwargs) -> SkillResult:
 
-        url = f"https://api.telegram.org/bot{self.token}/sendMessage"
+        url = f"{self.base_url}{self.token}/sendMessage"
 
         data = {
             "chat_id": self.chat_id,
