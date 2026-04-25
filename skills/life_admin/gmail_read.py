@@ -50,7 +50,7 @@ class GmailRead(SkillBase):
             log.error("API returned None")
 
         if response.status != 200:
-            log.error(f"API returned status code {response.status} - {response.json}")
+            log.error(f"API returned status code {response.status}")
             return f"API returned status code {response.status}"
         
         data = response.json
@@ -67,7 +67,7 @@ class GmailRead(SkillBase):
             log.error("API returned None")
 
         if response.status != 200:
-            log.error(f"API returned status code {response.status} - {response.json}")
+            log.error(f"API returned status code {response.status}")
             return f"API returned status code {response.status}"
 
         return response.json
