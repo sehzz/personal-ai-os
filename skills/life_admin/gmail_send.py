@@ -39,7 +39,7 @@ class GmailSend(SkillBase):
             return SkillResult(success=False, error="API returned None")
 
         if response.status != 200:
-            log.error(f"API returned status code {response.status} - {response.json}")
+            log.error(f"API returned status code {response.status}")
             error = f"API returned status code {response.status}"
             return SkillResult(success=False, error=error)
 
