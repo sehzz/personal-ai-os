@@ -17,7 +17,6 @@ class AdminOrchestrator:
     def process(self, message: str) -> str:
         classifier = self.classifier.classify(message)
         domain = classifier.get("domain", "unknown")
-        log.info(f"Intent: {domain}")
 
         if domain in ("multi", "unknown"):
             return self.ollama.generate(message)
