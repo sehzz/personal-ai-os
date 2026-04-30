@@ -1,37 +1,6 @@
-# from lib.cache import JSONFileCache
-# from lib.connectors import URLCaller
-# from lib.environment import get_conf_for
-
-# api_key = get_conf_for("notion").get("api_key")
-# version = get_conf_for("notion").get("version")
-# database_id = get_conf_for("notion").get("todo_database_id")
-
-# # url = "https://api.notion.com/v1/search"
-# url = f"https://api.notion.com/v1/databases/{database_id}/query"
-
-# # POST https://api.notion.com/v1/databases/{database_id}/query
-
-
-# headers = {
-#     "Authorization": f"Bearer {api_key}",
-#     "Notion-Version": version,
-#     "Content-Type": "application/json"
-# }
-
-# json = {"filter": {"value": "database", "property": "object"}}
-# caller = URLCaller(headers=headers)
-# response = caller.perform_single_call(url=url, verb="post")
-# JSONFileCache(name="notion_databases").save(data=response.json)
-# # print(response.json)
-
-
-
-
 from lib.connectors import URLCaller
 from lib.environment import get_conf_for
 from lib.log import logger
-from datetime import datetime, timezone, timedelta
-from zoneinfo import ZoneInfo
 from skills.base import SkillBase, SkillResult
 
 log = logger.get_logger()
