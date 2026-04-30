@@ -29,6 +29,8 @@ class AdminOrchestrator:
         request = ManagerRequest(task=message, context={})
         response = manager.process(request)
     
+        if not response:
+            return "Manager returned no response"
         return response.summary
             
 
