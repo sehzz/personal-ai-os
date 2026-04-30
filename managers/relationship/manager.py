@@ -10,6 +10,15 @@ class RelationshipManager(BaseManager):
         return "relationships"
 
     def process(self, request: ManagerRequest) -> ManagerResponse:
+        task = request.task
+
+        if task == "ping":
+            return ManagerResponse(
+                manager=self.name,
+                status="success",
+                summary="pong"
+            )
+
         return ManagerResponse(
             manager=self.name,
             status="success",

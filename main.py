@@ -41,7 +41,7 @@ async def lifespan(app: FastAPI):
         )
     
     managers = {
-    "life_admin": LifeAdminManager(),
+    "life_admin": LifeAdminManager(ollama=app.state.ollama),
     "finance": FinanceManager(),
     "content": ContentManager(),
     "relationships": RelationshipManager(),

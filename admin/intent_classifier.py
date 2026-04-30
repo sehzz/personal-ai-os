@@ -8,12 +8,13 @@ from shared.ollama_service import OllamaService
 class IntentClassifier:
     def __init__(self, ollama: OllamaService):
         self.ollama = ollama
+        self.model = "mistral:7b"
 
     def classify(self, message: str) -> dict:
         prompt = f"""You are an intent classifier for a Personal AI OS. Classify the user message below.
 
         The available domains are:
-        - life_admin: tasks, calendar, bills, subscriptions, deadlines, schedule, reminders
+        - life_admin: tasks, calendar, bills, subscriptions, deadlines, schedule, reminders- life_admin: tasks, calendar, bills, subscriptions, deadlines, schedule, reminders, emails, gmail, inbox, messages
         - finance: money, spending, budget, transactions, investments, expenses, income
         - content: social media, posts, reels, analytics, content ideas, Instagram, TikTok
         - relationships: people, birthdays, anniversaries, friends, family, contacts
@@ -29,7 +30,7 @@ class IntentClassifier:
 
         Message: {message}
 """
-        response = self.ollama.generate(prompt)
+        response = self.ollama.generate(prompt, model=self.model)
         response = response.strip().strip("```json").strip("```").strip()
         
         return json.loads(response)

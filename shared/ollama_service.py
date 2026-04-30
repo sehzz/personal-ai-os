@@ -11,11 +11,12 @@ class OllamaService():
         self.base_url = conf["ollama_base_url"]
         self.model = conf["ollama_model"]
 
-    def generate(self, prompt: str) -> str:
+    def generate(self, prompt: str, model: str = None) -> str:
 
+        model = model or self.model
         url = f"{self.base_url}/api/generate"
         payload = {
-            "model": self.model,
+            "model": model,
             "prompt": prompt,
             "stream": False
         }
