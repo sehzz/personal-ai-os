@@ -112,8 +112,8 @@ class Database():
         data = result.json
         
         #for testing purposes
-        # cache = JSONFileCache(name=f"{self.app_name}_{table_name}_data")
-        # cache.save(data)
+        cache = JSONFileCache(name=f"{self.app_name}_{table_name}_data")
+        cache.save(data)
 
         return data
         

@@ -11,7 +11,7 @@ from skills.life_admin.gmail_send import GmailSend
 from skills.life_admin.notion_tasks import NotionReadTasks
 from skills.life_admin.notion_write import NotionAddTask
 
-from lib.log import logger 
+from lib.log import logger
 log = logger.get_logger()
 
 class LifeAdminManager(BaseManager):
