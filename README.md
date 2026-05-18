@@ -53,8 +53,8 @@ Shared Memory (pgvector + Supabase)
 | 3     | Voice I/O                   | ✅ Complete |
 | 4     | Wake Word                   | ✅ Complete |
 | 5     | Multi-Agent Architecture    | ✅ Complete |
-| 6     | Skills + n8n Tool Layer     | 🔄 Up next  |
-| 7     | Autonomous Scheduling       | ⏳ Planned  |
+| 6     | Skills                      | ✅ Complete  |
+| 7     | Autonomous Scheduling       | 🔄 Up next  |
 | 8     | Voice Identity Recognition  | ⏳ Planned  |
 | 9     | Polish + Portfolio          | ⏳ Planned  |
 

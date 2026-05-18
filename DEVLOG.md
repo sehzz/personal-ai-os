@@ -325,3 +325,70 @@ The `HealthMonitor.check_all()` method runs during the FastAPI lifespan startup.
 
 #### Classifier Prompt Engineering
 This phase proved that prompt design is as critical as code architecture. By adding just 6 lines of domain definitions to the `IntentClassifier` prompt, the system's ability to correctly route complex requests (like bill management vs. bank balance) improved dramatically.
+
+
+## Phase 6: Skills Architecture & Integrations
+
+### What was built
+In this phase, I developed a robust plugin ecosystem ("Skills") to grant managers operational capabilities. This moved the OS from passive context retrieval to active execution.
+- **Strict Interfaces**: Formulated the `SkillBase` abstract class to standardize skill definitions and the `SkillResult` validation class to enforce predictable execution outputs.
+- **Google OAuth2 Engine**: Implemented an automated local credential management pipeline utilizing `google-auth`, `google-auth-oauthlib`, and `google-api-python-client`.
+- **External Connectors**: Constructed production-ready integrations for Telegram, Gmail, Google Calendar, Notion, and local database structures.
+
+### The skills architecture
+Every capability inherits from the SkillBase blueprint, utilizing Python's abc module to ensure a rigid structure.
+- `name` Property: An abstract property returning a distinct identifier string (e.g., `gmail.read`).
+- `execute()` Method: An abstract method that handles the runtime invocation and reliably returns a `SkillResult` container.
+- `SkillResult` Specification: A data class guaranteeing that every tool returns a uniform payload containing a boolean `success` flag, a `data` dictionary (or None), and an `error` string (or None).
+
+I used Python’s `abc` module to define a strict interface for all skills. If a new skill is created without a `name` or an `execute()` method, Python raises a `TypeError` at instantiation. This provides a "compile-time" safety net, ensuring no broken skills make it into the runtime environment.
+
+### Google OAuth2 integration
+To support secure, autonomous interactions with Google Workspace, I established a local credential management script. The routine enforces a robust fallback chain:
+- **Token Check**: Looks for an existing `token.json` file on the filesystem.
+- **Validation**: Inspects the token for validity.
+- **Automated Refresh**: If expired but a refresh token exists, it requests a new access token seamlessly in the background.
+- **Local Authorization Server**: If no tokens are viable, it launches a temporary local loopback server to prompt user re-authentication via the browser.
+
+This design guarantees that if a token expires at 2:00 AM during an autonomous workflow, the system handles remediation gracefully without throwing uncaught exceptions.
+
+### Skills implemented
+
+| Skills | Manager | What it does |
+|-------|---------|--------------|
+| notify.telegram_msg| All managers (core) | Dispatches urgent textual notifications directly to my personal Telegram chat. |
+| notify.telegram_voice | All managers (core) |  Converts text to speech and transmits an audio note via the Telegram Bot API. |
+| gmail.read | Life Admin | Polls, filters, and parses unread messages within my inbox. |
+| gmail.send | Life Admin | Composes and transmits emails with support for raw MIME or multiline formatting. |
+| calendar.read | Life Admin | Indexes upcoming calendar events and identifies scheduling conflicts. |
+| calender.write | Life Admin | Injects freshly negotiated events directly into my primary schedule. |
+| notion.read_tasks | Life Admin | Queries targeted databases inside Notion to track ongoing project milestones. |
+| notion.add_task | Life Admin | Programmatically appends actionable todo items to designated kanban views. |
+| contacts.read | Relationship | Reads people and upcoming events from the local Supabase relationship tables. |
+
+I used Python’s `abc` module to define a strict interface for all skills. If a new skill is created without a `name` or a `execute()` method, Python raises a `TypeError` at instantiation. This provides a "compile-time" safety net, ensuring no "broken" skill make it into the runtime environment.
+
+### How managers use skills
+During initialization `(__init__)`, each manager binds its permitted subset of tools to an internal registry dictionary.
+- **Context Awareness**: The supervisor injects a capabilities schema into the manager's system prompt during the `process()` cycle. This prompt educates the agent on its available tools, parameters, and invocation criteria.
+- Strict Generation Gating: Managers are tightly constrained to return a structured JSON string formatting intent:
+```json
+{
+  "skill": "gmail.read",
+  "params": {}
+}
+```
+- Execution Routing: If a routing error occurs or an invalid token slips through, the base architecture isolates the failure. The manager captures the exception and returns a failed status coupled with an explicit error payload (e.g., `Unknown skill: {skill_name}`), preventing system-wide cascading crashes.
+
+### Key design decisions
+#### Pure Python over No-Code Tools (e.g., n8n)
+I made a deliberate choice to drop no-code workflow utilities like n8n or Make. While no-code accelerates early prototyping, it obscures raw engineering details. Writing the integrations purely in Python explicitly demonstrates an intimate understanding of OAuth2 grant types, token life cycles, REST APIs, and multipart boundary payloads—highly visible proof of backend engineering capability.
+
+#### Principle of Least Privilege
+Instead of creating a global "god-mode" toolbox, I enforced strict skill domain isolation. The `RelationshipManager` cannot read my emails or alter database columns in Notion; it only holds visibility over the relationship tables. This sandboxing simplifies prompt engineering contexts and dramatically scales down the blast radius of a misbehaving agent.
+
+#### LLM-Driven Dynamic Tool Selection
+Rather than relying on static, fragile regex mapping (e.g., `if "send email" in prompt:`), I delegated execution routing directly to the agent's reasoning capabilities. Adding a capability no longer requires modifying core orchestration scripts; I simply append the structural definition to the system prompt, allowing the agent to dynamically determine the optimal tool path.
+
+#### mistral:7b for Structured Decisions
+While the highly responsive `llama3.2:3b` drives the ambient vocal interface (Phase 3), I designated `mistral:7b` for structural skill decisions. Smaller 3B parameter models frequently drop brackets or hallucinate keys under strict JSON formatting requirements. `mistral:7b` provides the consistent, deterministic syntax structures necessary to safely fire destructive webhooks, like sending emails or overriding calendar blocks.
